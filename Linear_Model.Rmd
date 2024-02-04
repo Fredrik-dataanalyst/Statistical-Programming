@@ -1,0 +1,141 @@
+---
+title: "Building a linear model"
+author: "Fredrik Öhlander"
+date: "2024-02-04"
+output: html_notebook
+---
+
+Linear models are fundamental tools in statistics and machine learning, widely 
+used for understanding the relationship between variables and making 
+predictions. A simple way of implementing the model is by using the 
+'lm'-function in R. While using the 'lm'-function is convenient it does not show
+us how a linear model works. To comprehend this more clearly, I have provided an R-code for building a linear model. Three functions have been constructed for
+analysing the data using a linear model. The R-Code is provided
+below the text describing the code.
+
+The main function has 4 arguments specified. 'data', 'dep', 'indep', and 'intercept'.The idea is that 'data' is the argument for the data set one wishes 
+to analyse. 'dep' is the name of the response vector, it is a vector with one element (the name of the dependent variable). 'indep' is a vector of names corresponding to the names of the independent variables. The argument 'intercept' determines whether the model has an intercept or not.
+
+To ensure that the function operates correctly, several if-statements have been implemented following the specification of the input parameters. These 
+if-statements serve as conditions for the function to proceed. If any of these conditions are not met, the function will terminate, and an error message will 
+be generated.
+
+The first if-statement verifies that the input for 'data' is a tibble. The 
+second if-statement checks that the input for 'dep' is a character vector corresponding to a column in the 'data' tibble. The third if-statement ensures 
+that there is only one name in the character vector of 'dep'. The fourth if-statement confirms that there is at least one element in the character vector provided as the input for 'indep'.
+
+Additionally, the fifth if-statement validates that all entries in the character vector of 'indep' correspond to columns in the 'data' tibble. Lastly, the sixth if-statement halts the execution of the code if the input for 'intercept' is not
+a logical vector."
+
+More if-statements could be included to further safeguard against misuse 
+of the function. However, for our current purpose, these conditions suffice.
+
+Since the function makes computations using the input for 'dep' and 'indep', denoting 'dep' as 'y' and 'indep' as 'X' is more convenient. The function 
+extracts the name of these inputs from the data frame (input for 'data'), and 
+then denotes them as 'y' and 'X' respectively.
+
+If the user of the function wishes to use an intercept there is an if-statement
+conditioning that. If an intercept is included, a column of ones is combined columnwise with 'X' (also known as the design matrix).
+
+The function outputs a list containing regression-related objects, including estimated regression coefficients ('beta'), fitted values ('fitted'), residuals 
+('residuals'), standard deviation of residuals ('sigma'), variance of regression coefficients ('se'), and the response vector ('y'). While the code provides mathematical computations for these, detailed explanations of the calculations 
+are not included. The list of objects in the output can all be calculated using
+the response vector 'y' and the design matrix 'X'.
+
+When the function output is printed, R generates a lengthy message. Though this 
+long message is not insightful, useful information can still be extracted. To facilitate interpretation, both a plot- and a print-function is developed.
+
+The print function, when applied to the output of the main function, extracts estimated regression coefficients and their corresponding standard errors. These
+are then intelligibly displayed: variable names and intercept are listed in the first row, regression coefficients in the second, and standard errors in the 
+third.
+
+The plot function, when applied to the output of the main function, visualizes the fitted and the true values in a scatterplot.
+
+At this stage the model can be implemented. In the code, the model is built
+using the economics-data from ggplot2. The input for 'dep' is "pce", 
+c("unemploy", "pop", "psavert") for 'indep', and intercept is left on default
+(TRUE).
+
+'ggplot2' and 'tibble' was used when building the functions. The code for
+installing and loading these is provided below:
+
+```{r}
+install.packages("ggplot2")
+library(ggplot2)
+install.packages("tibble")
+library(tibble)
+
+linear_regression <- function(data, dep, indep, intercept = TRUE)
+{
+  
+  if (!is_tibble(data)) {stop("the input 'data' must be a tibble")}
+  
+  if (!dep %in% names(data)) {stop("No dependent variable with that name in your tibble of data")} #If there is no variable named 'dep' in 'data' stop.
+  
+  if(!(is.character(dep) && length(dep) == 1)) {
+    stop("'dep' must be a character vector of length 1")}
+  
+  if (!(is.character(indep) && length(indep) > 0)) {
+    stop("'indep' must be a character vector of length 1 or greater.")}
+  
+  if (!all(indep %in% names(data))) {stop("No independet variables with that name in your tibble of data")}
+  
+   if (!is.logical(intercept)) {stop("The input 'intercept' must be a logical variable")}
+  
+  X <- as.matrix(data[,indep])
+  y <- as.matrix(data[[dep]])
+  
+  if (intercept == TRUE) {
+    rows_in_vector_of_1s <- nrow(X)  
+    Intercept <- rep(1, rows_in_vector_of_1s) 
+    X <- cbind(Intercept, X) 
+  }
+  
+  XT <- t(X) 
+  XTXI <- solve(XT %*% X) 
+  beta <- XTXI %*% XT %*% y 
+  fitted <- X%*%beta
+  residuals <- y-fitted 
+  sum_of_squared_residuals <- sum(residuals^2) 
+  sigma <- sqrt(sum_of_squared_residuals /(nrow(X)-ncol(X)))  
+  vector_of_variances_of_betas <- diag((sigma^2)*XTXI) 
+  se <- sqrt(vector_of_variances_of_betas) 
+  
+  output <- list(beta = beta, se = se, residuals = residuals, fitted = fitted, 
+  sigma = sigma, dep = dep, indep = indep, y = y)
+  return(output)} 
+
+print <- function(the_list){ 
+  beta <- the_list$beta
+  se <- the_list$se
+  my_matrix <- rbind(t(beta), se)
+  rownames(my_matrix) <- c("coefficient", "se")
+  return(my_matrix)}
+
+plot <- function(the_list){ 
+  fitted <- the_list$fitted
+  y <- the_list$y
+  newdf <- data.frame(Actual = y, Fitted = fitted)
+  ggplot(newdf, aes(x = (1:length(y)))) +
+    geom_point(aes(y = Actual, color = "Actual"), size = 1) +
+    geom_point(aes(y = Fitted, colour = "Fitted"), size = 1) +
+    labs(title = "Actual and fitted values (sorted)", x = "Order", y = "Value") +
+    scale_color_manual(values = c("Actual" = "turquoise", "Fitted" = "orange", name = "Variable")) +
+    theme_minimal()
+}
+
+
+
+obj <- linear_regression(ggplot2::economics,
+                         dep = "pce",
+                         indep = c("unemploy", "pop", "psavert"))
+
+
+print(obj)
+plot(obj)
+```
+
+
+
+
+
