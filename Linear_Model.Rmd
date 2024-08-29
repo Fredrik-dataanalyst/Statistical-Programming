@@ -10,7 +10,7 @@ used for understanding the relationship between variables and making
 predictions. A simple way of implementing the model is by using the 
 'lm'-function in R. While using the 'lm'-function is convenient it does not show
 us how a linear model works. To comprehend this more clearly, I have provided an R-code for building a linear model. Three functions have been constructed for
-analysing the data using a linear model. The R-Code is provided
+analysing the data using the model. The R-Code is provided
 below the text describing the code.
 
 The main function has 4 arguments specified. 'data', 'dep', 'indep', and 'intercept'.The idea is that 'data' is the argument for the data set one wishes 
