@@ -35,7 +35,7 @@ extracts the name of these inputs from the data frame (input for 'data'), and
 then denotes them as 'y' and 'X' respectively.
 
 If the user of the function wishes to use an intercept there is an if-statement
-conditioning that. If an intercept is included, a column of ones is combined columnwise with 'X' (also known as the design matrix).
+conditioning that. If an intercept is included a column of ones is combined columnwise with 'X' (also known as the design matrix).
 
 The function outputs a list containing regression-related objects, including estimated regression coefficients ('beta'), fitted values ('fitted'), residuals 
 ('residuals'), standard deviation of residuals ('sigma'), variance of regression coefficients ('se'), and the response vector ('y'). While the code provides mathematical computations for these, detailed explanations of the calculations 
